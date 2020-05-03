@@ -112,7 +112,9 @@ Set-PSFConfig -Module dbachecks -Name policy.connection.pingmaxms -Value 10 -Ini
 Set-PSFConfig -Module dbachecks -Name policy.connection.pingcount -Value 3 -Initialize -Description "Number of times to ping a server to establish average response time"
 
 #HADR
-Set-PSFConfig -Module dbachecks -Name policy.hadr.tcpport -Value "1433" -Initialize -Description "The TCPPort for the HADR check"
+Set-PSFConfig -Module dbachecks -Name policy.hadr.agtcpport -Value "" -Initialize -Description "The TCPPort for the HADR listener check"
+Set-PSFConfig -Module dbachecks -Name policy.hadr.tcpport -Value "1433" -Initialize -Description "The TCPPort for the HADR replica check"
+
 
 #Dump Files
 Set-PSFConfig -Module dbachecks -Name policy.dump.maxcount -Value 1 -Initialize -Description "Maximum number of expected dumps"
@@ -146,6 +148,8 @@ Set-PSFConfig -Module dbachecks -Name policy.database.maxdop -Value 0 -Initializ
 Set-PSFConfig -Module dbachecks -Name policy.database.status.excludereadonly -Value @() -Initialize -Description "Database names that we expect to be readonly"
 Set-PSFConfig -Module dbachecks -Name policy.database.status.excludeoffline -Value @() -Initialize -Description "Database names that we expect to be offline"
 Set-PSFConfig -Module dbachecks -Name policy.database.status.excluderestoring -Value @() -Initialize -Description "Database names that we expect to be restoring"
+Set-PSFConfig -Module dbachecks -Name policy.database.querystoreenabled -Validation bool -Value "ON" -Initialize -Description "Query Store actual state should be set to ON"
+Set-PSFConfig -Module dbachecks -Name database.querystore.excludedb -Value @() -Initialize -Description "A List of databases that we do not want to check for Query Store"
 
 # Policy for Ola Hallengren Maintenance Solution
 Set-PSFConfig -Module dbachecks -name policy.ola.installed -Validation bool -Value $true -Initialize -Description "Checks to see if Ola Hallengren solution is installed"
@@ -229,6 +233,9 @@ Set-PSFConfig -Module dbachecks -Name skip.database.logfilecounttest -Validation
 Set-PSFConfig -Module dbachecks -Name skip.logshiptesting -Validation bool -Value $false -Initialize -Description "Skip the logshipping test"
 Set-PSFConfig -Module dbachecks -Name skip.instance.modeldbgrowth -Validation bool -Value $false -Initialize -Description "Skip the model database growth settings test"
 Set-PSFConfig -Module dbachecks -Name skip.hadr.listener.pingcheck -Validation bool -Value $false -Initialize -Description "Skip the HADR listener ping test (especially useful for Azure and AWS)"
+Set-PSFConfig -Module dbachecks -Name skip.hadr.listener.tcpport -Validation bool -Value $false -Initialize -Description "Skip the HADR AG Listener TCP port number (If port number is not standard across the entire AG architecture)"
+Set-PSFConfig -Module dbachecks -Name skip.hadr.replica.tcpport -Validation bool -Value $false -Initialize -Description "Skip the HADR Replica TCP port number (If port number is not standard across the entire AG architecture)"
+Set-PSFConfig -Module dbachecks -Name skip.hadr.listener.pingcheck -Validation bool -Value $false -Initialize -Description "Skip the HADR listener ping test (especially useful for Azure and AWS)"
 Set-PSFConfig -Module dbachecks -Name skip.instance.defaulttrace -Validation bool -Value $false -Initialize -Description "Skip the default trace check"
 Set-PSFConfig -Module dbachecks -Name skip.agent.longrunningjobs -Validation bool -Value $false -Initialize -Description "Skip the long running agent jobs check"
 Set-PSFConfig -Module dbachecks -Name skip.agent.lastjobruntime -Validation bool -Value $false -Initialize -Description "Skip the last agent job time check"
@@ -243,7 +250,6 @@ Set-PSFConfig -Module dbachecks -Name skip.security.sqlagentproxiesnopublicrole 
 Set-PSFConfig -Module dbachecks -Name skip.security.symmetrickeyencryptionlevel -Validation bool -Value $true -Initialize -Description "Skips the test for if the Symmetric Encryption is at least AES_128 or higher in non-system databases"
 Set-PSFConfig -Module dbachecks -Name skip.security.asymmetrickeysize -Validation bool -Value $true -Initialize -Description "Skips the test for the size of the Assymetric Key sizes being above 2048 in non-system databases"
 Set-PSFConfig -Module dbachecks -Name skip.security.hideinstance -Validation bool -Value $true -Initialize -Description "Skips the scan for if hide instance is set to YES on the instance"
-
 Set-PSFConfig -Module dbachecks -Name skip.security.clrassembliessafe -Validation bool -Value $true -Initialize -Description "Skips the scan for CLR Assemblies set to SAFE_ACCESS"
 Set-PSFConfig -Module dbachecks -Name skip.security.engineserviceadmin -Validation bool -Value $true -Initialize -Description "Skips the scan for the SQL Server Engine account is a local administrator"
 Set-PSFConfig -Module dbachecks -Name skip.security.agentserviceadmin -Validation bool -Value $true -Initialize -Description "Skips the scan for the SQL Server Agent account is a local administrator"
@@ -254,9 +260,12 @@ Set-PSFConfig -Module dbachecks -Name skip.security.localwindowsgroup -Validatio
 Set-PSFConfig -Module dbachecks -Name skip.security.publicrolepermission -Validation bool -Value $true -Initialize -Description "Skips the scan for if the public server role has permissions"
 Set-PSFConfig -Module dbachecks -Name skip.security.builtinadmin -Validation bool -Value $true -Initialize -Description "Skips the scan for BUILTIN\Administrators login"
 Set-PSFConfig -Module dbachecks -Name skip.security.guestuserconnect -Validation bool -Value $true -Initialize -Description "Skips the scan for guest user have CONNECT permission"
+Set-PSFConfig -Module dbachecks -Name skip.security.ContainedDBSQLAuth -Validation bool -Value $true -Initialize -Description "Skips the scan for if a contained database as sql authenticated users"
 Set-PSFConfig -Module dbachecks -Name skip.agent.alert -Validation bool -Value $false -Initialize -Description "Skips the agent alerts checks"
-
-
+Set-PSFConfig -Module dbachecks -Name skip.security.LoginCheckPolicy -Validation bool -Value $true -Initialize -Description "Skips the scan for CHECK_POLICY on for all logins"
+Set-PSFConfig -Module dbachecks -Name skip.security.LoginPasswordExpiration -Validation bool -Value $true -Initialize -Description "Skips the scan for password expiration on for all logins in sysadmin role"
+Set-PSFConfig -Module dbachecks -Name skip.security.LoginMustChange -Validation bool -Value $true -Initialize -Description "Skips the scan for new logins must have password change turned on"
+Set-PSFConfig -Module dbachecks -Name skip.security.nonstandardport -Validation bool -Value $true -Initialize -Description "Skips the check for whether SQL Server should be configured with a non standard port"
 #agent
 Set-PSFConfig -Module dbachecks -Name agent.dbaoperatorname -Value $null -Initialize -Description "Name of the DBA Operator in SQL Agent"
 Set-PSFConfig -Module dbachecks -Name agent.dbaoperatoremail -Value $null -Initialize -Description "Email address of the DBA Operator in SQL Agent"

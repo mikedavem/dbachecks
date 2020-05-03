@@ -984,7 +984,7 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
         if ($NotContactable -contains $psitem) {
             Context "Testing if failed login auditing is in place on $psitem" {
                 It "Can't Connect to $Psitem" -Skip:$skip {
-                    $false	|  Should -BeTrue -Because "The instance should be available to be connected to!"
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
                 }
             }
         }
@@ -1002,7 +1002,7 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
         if ($NotContactable -contains $psitem) {
             Context "Testing if successful and failed login auditing is in place on $psitem" {
                 It "Can't Connect to $Psitem" -Skip:$skip {
-                    $false	|  Should -BeTrue -Because "The instance should be available to be connected to!"
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
                 }
             }
         }
@@ -1019,7 +1019,7 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
         if ($NotContactable -contains $psitem) {
             Context "Testing to see if the public role has access to the SQL Agent proxies on $psitem" {
                 It "Can't Connect to $Psitem" -Skip:$skip {
-                    $false	|  Should -BeTrue -Because "The instance should be available to be connected to!"
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
                 }
             }
         }
@@ -1037,7 +1037,7 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
         if ($NotContactable -contains $psitem) {
             Context "Checking the Hide an Instance of SQL Server Database Engine property on $psitem" {
                 It "Can't Connect to $Psitem" -Skip:$skip {
-                    $false	|  Should -BeTrue -Because "The instance should be available to be connected to!"
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
                 }
             }
         }
@@ -1059,7 +1059,7 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
             }
         }
         else {
-            if($IsCoreCLR){
+            if ($IsCoreCLR) {
                 $Skip = $true
             }
             Context "Testing whether SQL Engine account is a local administrator on $psitem" {
@@ -1080,7 +1080,7 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
             }
         }
         else {
-            if($IsCoreCLR){
+            if ($IsCoreCLR) {
                 $Skip = $true
             }
             Context "Testing whether SQL Agent account is a local administrator on $psitem" {
@@ -1101,12 +1101,65 @@ $Tags = Get-CheckInformation -Check $Check -Group Instance -AllChecks $AllChecks
             }
         }
         else {
-            if($IsCoreCLR){
+            if ($IsCoreCLR) {
                 $Skip = $true
             }
             Context "Testing whether SQL Full Text account is a local administrator on  $psitem" {
                 It "The SQL Full Text service account should not be a local administrator on $psitem" -Skip:$skip {
                     Assert-FullTextServiceAdmin -AllInstanceInfo $AllInstanceInfo
+                }
+            }
+        }
+    }
+    Describe "Login Check Policy" -Tags LoginCheckPolicy, Security, CIS, Medium, $filename {
+        $skip = Get-DbcConfigValue skip.security.LoginCheckPolicy
+        if ($NotContactable -contains $psitem) {
+            Context "Testing if the CHECK_POLICY is enabled on all logins on $psitem" {
+                It "Can't Connect to $Psitem" -Skip:$skip {
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
+                }
+            }
+        }
+        else {
+            Context "Testing if the CHECK_POLICY is enabled on all logins on $psitem" {
+                It "All logins should have the CHECK_POLICY option set to ON on $psitem" -Skip:$skip {
+                    Assert-LoginCheckPolicy -AllInstanceInfo $AllInstanceInfo
+                }
+            }
+        }
+    }
+
+    Describe "Login Password Expiration" -Tags LoginPasswordExpiration, Security, CIS, Medium, $filename {
+        $skip = Get-DbcConfigValue skip.security.LoginPasswordExpiration
+        if ($NotContactable -contains $psitem) {
+            Context "Testing if the login password expiration is enabled for sql logins in the sysadmin role $psitem" {
+                It "Can't Connect to $Psitem" -Skip:$skip {
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
+                }
+            }
+        }
+        else {
+            Context "Testing if the login password expiration is enabled for sql logins in the sysadmin role on $psitem" {
+                It "All sql logins should have the password expiration option set to ON in the sysadmin role on $psitem" -Skip:$skip {
+                    Assert-LoginPasswordExpiration -AllInstanceInfo $AllInstanceInfo
+                }
+            }
+        }
+    }
+
+    Describe "Login Must Change" -Tags LoginMustChange, Security, CIS, Medium, $filename {
+        $skip = Get-DbcConfigValue skip.security.LoginMustChange
+        if ($NotContactable -contains $psitem) {
+            Context "Testing if the new SQL logins that have not logged have to change their password when they log in on $psitem" {
+                It "Can't Connect to $Psitem" -Skip:$skip {
+                    $false	| Should -BeTrue -Because "The instance should be available to be connected to!"
+                }
+            }
+        }
+        else {
+            Context "Testing if the new SQL logins that have not logged have to change their password when they log in on $psitem" {
+                It "All new sql logins should have the have to change their password when they log in for the first time on $psitem"  -Skip:$skip {
+                    Assert-LoginMustChange -AllInstanceInfo $AllInstanceInfo
                 }
             }
         }
@@ -1131,6 +1184,20 @@ Describe "SQL Browser Service" -Tags SqlBrowserServiceAccount, ServiceAccount, H
                             $Services.Where{ $_.ServiceType -eq 'Browser' }.State | Should -Be "Stopped" -Because 'Unless there are multiple instances you dont need the browser service'
                         }
                     }
+                    else {
+                        It "SQL browser service on $psitem should be Running as multiple instances are installed" {
+                            $Services.Where{ $_.ServiceType -eq 'Browser' }.State | Should -Be "Running" -Because 'You need the browser service with multiple instances' }
+                    }
+
+                    if ($Services.Where{ $_.ServiceType -eq 'Engine' }.Count -eq 1) {
+                        It "SQL browser service startmode should be Disabled on $psitem as only one instance is installed" {
+                            $Services.Where{ $_.ServiceType -eq 'Browser' }.StartMode | Should -Be "Disabled" -Because 'Unless there are multiple instances you dont need the browser service' }
+                    }
+                    else {
+                        It "SQL browser service startmode should be Automatic on $psitem as multiple instances are installed" {
+                            $Services.Where{ $_.ServiceType -eq 'Browser' }.StartMode | Should -Be "Automatic"
+                        }
+                    }
                 }
                 else {
                     It "SQL browser service on $psitem should be Running as multiple instances are installed" {
@@ -1146,22 +1213,16 @@ Describe "SQL Browser Service" -Tags SqlBrowserServiceAccount, ServiceAccount, H
                     }
                 }
             }
-            else {
-                It "Running on Linux so can't check Services on $Psitem" -skip {
-                }
-            }
         }
     }
 }
 
 
-Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactable
-
 # SIG # Begin signature block
 # MIINEAYJKoZIhvcNAQcCoIINATCCDP0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUmS1kli9zTmqa0emx33hMujcX
-# NZmgggpSMIIFGjCCBAKgAwIBAgIQAsF1KHTVwoQxhSrYoGRpyjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUljjtyZomn9EpmYMdk2KvLAzY
+# SI2gggpSMIIFGjCCBAKgAwIBAgIQAsF1KHTVwoQxhSrYoGRpyjANBgkqhkiG9w0B
 # AQsFADByMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
 # VQQLExB3d3cuZGlnaWNlcnQuY29tMTEwLwYDVQQDEyhEaWdpQ2VydCBTSEEyIEFz
 # c3VyZWQgSUQgQ29kZSBTaWduaW5nIENBMB4XDTE3MDUwOTAwMDAwMFoXDTIwMDUx
@@ -1221,11 +1282,11 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
 # EyhEaWdpQ2VydCBTSEEyIEFzc3VyZWQgSUQgQ29kZSBTaWduaW5nIENBAhACwXUo
 # dNXChDGFKtigZGnKMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEMMQowCKACgACh
 # AoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAM
-# BgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRFj6CDx+A0D/eNqeLjL2A2UShB
-# AjANBgkqhkiG9w0BAQEFAASCAQAJcmjtfhrP4YGXsOFT/WxvY4ab4ijK55qq0zOa
-# Cxc9kuOcZ6bqS9MynPJU24IuX7DejEGeJHQNYr4I6CXKcCqK1MtZtRB3q/cwn9sy
-# O0mQ8YMpXaTAII/paOaScOxrzz245vgY7amxVPkbhMFvSpH8/I1lD8isBpgi1FAb
-# ixOJJyWYfpuKzmKJBxxaZYHDYCw+rZe8aJvXE2ZOYQlzI09fuZfD8eXzyVM/CRA1
-# 3zFiBBk1sNjkF6ZgzVb6aDbatPJkVHh2a5/2B+ZlcEsMm3h2JupJm2olNhSazJ1M
-# pI/EaVX701H01l+V7E6kPLfQnYXjbVMopKFlYalj5/isnxFZ
+# BgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRwMJYZn0zeCA5Te+02r+w21v4E
+# hDANBgkqhkiG9w0BAQEFAASCAQA7q2XfAWYjfDkrzKpqeGAthJGvrGptt2OXIKbH
+# QnjhmM7+Yg6VJ8UElOycC3mZbHwMDpS9qkY6cckTXqM19rekrIY4xGhIsSl4jLrG
+# 0HJlxNK0Cfb/d1lEzf84TRrL5gILYp9gL4RvxzpzdsMRP/0/izaGcioaH8E0KYsj
+# Y/6L7+a2Yy917qzaXSd11S3ytHb53EVJoIkn7gUvHdDWHS3ODqijgaos1dO9ikEA
+# 0DJfz5OCutDpGrSG8hMig1xr/flTGYHd0+UU7T2xA+FTu5JWBWyKdUmLGwiPaZwu
+# lhFnXBW9xuVaUhcVKMUT1DlcRj8yfenfydSJsVvNZkdhLZ7Y
 # SIG # End signature block

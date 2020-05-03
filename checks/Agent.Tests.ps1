@@ -46,7 +46,7 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
                         }
                     }
                     else {
-                        # cant check agent on container - hmm does this actually work with instance nered to check
+                        # cant check agent on container - hmm does this actually work with instance need to check
                         if (-not $IsLinux -and ($InstanceSMO.HostPlatform -ne 'Linux')) {
 
                             Context "Testing SQL Agent is running on $psitem" {
@@ -95,7 +95,7 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
                             @($operatoremail).ForEach{
                                 if ($operatoremail) {
                                     It "operator email $operatoremail is correct" {
-                                        $psitem | Should -Bein $results.EmailAddress -Because 'This operator email is expected to exist'
+                                        $psitem | Should -BeIn $results.EmailAddress -Because 'This operator email is expected to exist'
                                     }
                                 }
                             }
@@ -217,19 +217,19 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
                         $alerts = Get-DbaAgentAlert -SqlInstance $psitem
                         Context "Testing Agent Alerts Severity exists on $psitem" {
                             ForEach ($sev in $severity) {
-                                It "$psitem should have Severity $sev Alert" -Skip:$skip{
+                                It "$psitem should have Severity $sev Alert" -Skip:$skip {
                                     ($alerts.Where{ $psitem.Severity -eq $sev }) | Should -be $true -Because "Recommended Agent Alerts to exists http://blog.extreme-advice.com/2013/01/29/list-of-errors-and-severity-level-in-sql-server-with-catalog-view-sysmessages/"
                                 }
-                                It "$psitem should have Severity $sev Alert enabled" -Skip:$skip{
+                                It "$psitem should have Severity $sev Alert enabled" -Skip:$skip {
                                     ($alerts.Where{ $psitem.Severity -eq $sev }) | Should -be $true -Because "Configured alerts should be enabled"
                                 }
                                 if ($AgentAlertJob) {
-                                    It "$psitem should have Jobname for Severity $sev Alert" -Skip:$skip{
+                                    It "$psitem should have a job name for Severity $sev Alert" -Skip:$skip {
                                         ($alerts.Where{ $psitem.Severity -eq $sev }).jobname -ne $null | Should -be $true -Because "Should notify by SQL Agent Job"
                                     }
                                 }
                                 if ($AgentAlertNotification) {
-                                    It "$psitem should have notification for Severity $sev Alert" -Skip:$skip{
+                                    It "$psitem should have notification for Severity $sev Alert" -Skip:$skip {
                                         ($alerts.Where{ $psitem.Severity -eq $sev }).HasNotification -in 1, 2, 3, 4, 5, 6, 7 | Should -be $true -Because "Should notify by Agent notifications"
                                     }
                                 }
@@ -237,10 +237,10 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
                         }
                         Context "Testing Agent Alerts MessageID exists on $psitem" {
                             ForEach ($mid in $messageid) {
-                                It "$psitem should have Message_ID $mid Alert" -Skip:$skip{
+                                It "$psitem should have Message_ID $mid Alert" -Skip:$skip {
                                     ($alerts.Where{ $psitem.messageid -eq $mid }) | Should -be $true -Because "Recommended Agent Alerts to exists http://blog.extreme-advice.com/2013/01/29/list-of-errors-and-severity-level-in-sql-server-with-catalog-view-sysmessages/"
                                 }
-                                It "$psitem should have Message_ID $mid Alert enabled" -Skip:$skip{
+                                It "$psitem should have Message_ID $mid Alert enabled" -Skip:$skip {
                                     ($alerts.Where{ $psitem.messageid -eq $mid }) | Should -be $true -Because "Configured alerts should be enabled"
                                 }
                                 if ($AgentAlertJob) {
@@ -417,8 +417,8 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
 # SIG # Begin signature block
 # MIINEAYJKoZIhvcNAQcCoIINATCCDP0CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUqeEo7JCY+dPT/ByN9VVAvY9q
-# JQegggpSMIIFGjCCBAKgAwIBAgIQAsF1KHTVwoQxhSrYoGRpyjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUvy7QUwJDanTY+fS/DkTHjF5u
+# jkmgggpSMIIFGjCCBAKgAwIBAgIQAsF1KHTVwoQxhSrYoGRpyjANBgkqhkiG9w0B
 # AQsFADByMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
 # VQQLExB3d3cuZGlnaWNlcnQuY29tMTEwLwYDVQQDEyhEaWdpQ2VydCBTSEEyIEFz
 # c3VyZWQgSUQgQ29kZSBTaWduaW5nIENBMB4XDTE3MDUwOTAwMDAwMFoXDTIwMDUx
@@ -478,11 +478,11 @@ Set-PSFConfig -Module dbachecks -Name global.notcontactable -Value $NotContactab
 # EyhEaWdpQ2VydCBTSEEyIEFzc3VyZWQgSUQgQ29kZSBTaWduaW5nIENBAhACwXUo
 # dNXChDGFKtigZGnKMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEMMQowCKACgACh
 # AoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAM
-# BgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTNLvjMGUJ/ZNFiFVFm9PehNPom
-# wjANBgkqhkiG9w0BAQEFAASCAQAwV/YWzhfm/teMU0tS4ZkziNDFIfkgOK0Xccq3
-# TPTZQTW59noEOVYkJNs02LVuGx8KKVczlHQfqgoMv+X2ZpkwMsUt7l5E+CEgSf4R
-# Yc3QcFpJ268V2CDM8VrAVGF/T/frs+eTdiFsZmlmY7LS9Z632i1fiaJ+nPUseEU5
-# tBC2EPsBwyjVjIozuaAiuWCCQQKsL/yM0s7ZhS0nbzjtsof+UPrR1RLrP3nUioAc
-# EZIVh/UnNvFaH9y1fDG9PkdPMSH5AFBEcT8I19rz/GGUSFblO8SmQJR9h8yur5P3
-# eFxRIB4ZBqcOq93OMty5kHbSObdyK+HkS1spwiNH/5GCkAW2
+# BgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQcGlfdaoBDYYY92g7aIXXAxeU2
+# vjANBgkqhkiG9w0BAQEFAASCAQAZN2dVjhmbXmnPObqjRXwR99YC8SSoCmfJlDvK
+# 622gp5WE3ngHbH3rQ7njyFRaobseEeNdnZNDQ894NDQLvkzjdeBBf4PMV7b1S4YE
+# phpIE58gv1oK1fupSiebdt3DQAaPVQ5AIRdZFaqsSXN+VoDx4WUxS1UHusyS68Yh
+# CC44UwyKNVvRie57bQBkA7PGLS7m8foQ7i37WC6WOT/dAf17SkAPD4FuSDl0JFzl
+# /aoCNWiOypb6rYcpCWvrosyq+2jLVmm1ad7fxE6jQPYS39OCRHs5NnxJbymyKFQH
+# e7Y9CuFKJvCRSwUZv6S8ngnJihbQioMvCX6aEtvIADCklt57
 # SIG # End signature block
