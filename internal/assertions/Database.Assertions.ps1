@@ -77,7 +77,7 @@ function Assert-GuestUserConnect {
         [string]$Instance,
         [string]$Database
     )
-    $guestperms = Get-DbaUserPermission -SqlInstance $Instance -Database $psitem.Name | Where-Object {$_.Grantee -eq "guest" -and $_.Permission -eq "CONNECT"}
+    $guestperms = Get-DbaUserPermission -SqlInstance $Instance -Database $Database | Where-Object {$_.Grantee -eq "guest" -and $_.Permission -eq "CONNECT"}
     $guestperms.Count | Should -Be 0 -Because "We expect the guest user in $Database on $Instance to not have CONNECT permissions"
 }
 
@@ -86,7 +86,7 @@ function Assert-CLRAssembliesSafe {
         [string]$Instance,
         [string]$Database
     )
-    @(Get-DbaDbEncryption -SqlInstance $Instance -Database $Database | Where-Object {$_.Encryption -eq "Symmetric Key" -and $_.KeyLength -LT 2048}).Count | Should -Be 0 -Because "Symmetric keys should have a key length greater than or equal to 2048"
+    @(Get-DbaDbAssembly -SqlInstance $Instance -Database $Database | Where-Object {$_.IsSystemObject -eq $false -and $_.SecurityLevel -ne "Safe" -and $_.Database -ne "SSISDB" -and $_.Name -ne "ISSERVER"}).Count | Should -Be 0 -Because "We expect CLR Assemblies to operate in the SAFE permission set"
 }
 
 function Assert-AsymmetricKeySize {
@@ -94,7 +94,7 @@ function Assert-AsymmetricKeySize {
         [string]$Instance,
         [string]$Database
     )
-    @(Get-DbaDbEncryption -SqlInstance $Instance -Database $Database | Where-Object {$_.Encryption -eq "Symmetric Key" -and $_.KeyLength -LT 2048}).Count | Should -Be 0 -Because "Symmetric keys should have a key length greater than or equal to 2048"
+    @(Get-DbaDbEncryption -SqlInstance $Instance -Database $Database | Where-Object {$_.Encryption -eq "Asymmetric Key" -and $_.KeyLength -LT 2048}).Count | Should -Be 0 -Because "Asymmetric keys should have a key length greater than or equal to 2048"
 }
 
 function Assert-SymmetricKeyEncryptionLevel {
@@ -102,7 +102,7 @@ function Assert-SymmetricKeyEncryptionLevel {
         [string]$Instance,
         [string]$Database
     )
-    @(Get-DbaDbEncryption -SqlInstance $Instance -Database $Database | Where-Object {$_.Encryption -eq "Asymmetric Key" -and $_.EncryptionAlgrothim -notin "AES_128","AES_192","AES_256"}).Count  | Should -Be 0 -Because "Asymmetric keys should have an encryption algrothim of at least AES_128"
+    @(Get-DbaDbEncryption -SqlInstance $Instance -Database $Database | Where-Object {$_.Encryption -eq "Symmetric Key" -and $_.EncryptionAlgrothim -notin "AES_128","AES_192","AES_256"}).Count  | Should -Be 0 -Because "Symmetric keys should have an encryption algrothim of at least AES_128"
 }
 
 function Assert-QueryStoreEnabled {
@@ -110,7 +110,14 @@ function Assert-QueryStoreEnabled {
         [string]$Instance,
         [string]$Database
     )
-    @(Get-DbaDbQueryStoreOption -SqlInstance $Instance -Database $Database | Where-Object {$_.ActualState -notin @("OFF", "ERROR") } ).Count  | Should -Be 1 -Because "We expect the Query Store to be enabled in $Database on $Instance"
+    (Get-DbaDbQueryStoreOption -SqlInstance $Instance -Database $Database).ActualState  | Should -Not -BeIn 'OFF', 'ERROR' -Because "We expect the Query Store to be enabled in $Database on $Instance"
+}
+function Assert-QueryStoreDisabled {
+    Param (
+        [string]$Instance,
+        [string]$Database
+    )
+    (Get-DbaDbQueryStoreOption -SqlInstance $Instance -Database $Database).ActualState | Should -Be 'OFF' -Because "We expect the Query Store to be disabled in $Database on $Instance"
 }
 function Assert-ContainedDBSQLAuth {
     Param (
